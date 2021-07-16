@@ -30,7 +30,9 @@ import numpy as np
 import torch
 from torch import nn
 import torch.distributed as dist
-from PIL import ImageFilter, ImageOps
+from PIL import ImageFilter, ImageOps, Image, ImageChops
+import torchvision.transforms.functional as F
+import torchvision.transforms as transforms
 
 
 class GaussianBlur(object):
@@ -54,19 +56,35 @@ class GaussianBlur(object):
         )
 
 
-class Solarization(object):
+class Inversion(object):
     """
-    Apply Solarization to the PIL image.
+    Apply Invert to the PIL image.
     """
     def __init__(self, p):
         self.p = p
 
     def __call__(self, img):
         if random.random() < self.p:
-            return ImageOps.solarize(img)
+            return ImageOps.invert(img)
         else:
             return img
 
+class RandomImagePlacement(object):
+    def __init__(self, scale):
+        self.scale = scale
+
+    def __call__(self, img):
+        scale = min(self.scale) + torch.rand(1)*abs(self.scale[0] - self.scale[1])
+        size = torch.tensor(img.size)
+        img_resize = F.resize(img, list((scale*size).long()), interpolation=transforms.InterpolationMode.BICUBIC)
+
+        bg = Image.new(img_resize.mode, list(size), (255,255,255))
+        new_size = torch.tensor(img_resize.size)
+
+        # New position
+        offset = torch.rand(2)*(size - new_size)
+        bg.paste(img_resize, list(offset))
+        return bg
 
 def load_pretrained_weights(model, pretrained_weights, checkpoint_key, model_name, patch_size):
     if os.path.isfile(pretrained_weights):
