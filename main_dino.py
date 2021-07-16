@@ -21,7 +21,7 @@ import json
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageChops
 import torch
 import torch.nn as nn
 import torch.distributed as dist

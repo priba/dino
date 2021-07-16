@@ -83,7 +83,7 @@ class RandomImagePlacement(object):
 
         # New position
         offset = torch.rand(2)*(size - new_size)
-        bg.paste(img_resize, list(offset))
+        bg.paste(img_resize, list(offset.long().numpy()))
         return bg
 
 def load_pretrained_weights(model, pretrained_weights, checkpoint_key, model_name, patch_size):
